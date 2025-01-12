@@ -1,38 +1,80 @@
-const Task = require('../models/Task');
-const Project = require('../models/Project');
+const Task = require('../models/taskModel');
 
-// Add Task to Project
-exports.addTask = async (req, res) => {
-  const { projectId, title, description, assignedUser, dueDate } = req.body;
+// Get All Tasks
+const getAllTasks = async (req, res) => {
   try {
-    const task = new Task({ title, description, assignedUser, dueDate });
-    await task.save();
-
-    const project = await Project.findById(projectId);
-    if (!project) {
-      return res.status(404).send({ message: 'Project not found' });
-    }
-    project.tasks.push(task);
-    await project.save();
-
-    res.status(201).send({ message: 'Task added successfully', task });
+    const tasks = await Task.find();
+    res.status(200).json(tasks);
   } catch (error) {
-    res.status(400).send({ message: 'Error adding task', error });
+    res.status(500).json({ error: 'Failed to fetch tasks' });
   }
 };
 
-// Update Task Status
-exports.updateTaskStatus = async (req, res) => {
-  const { taskId, status } = req.body;
+// Get Task By ID
+const getTaskById = async (req, res) => {
+  const { id } = req.params;
   try {
-    const task = await Task.findById(taskId);
+    const task = await Task.findById(id);
     if (!task) {
-      return res.status(404).send({ message: 'Task not found' });
+      return res.status(404).json({ error: 'Task not found' });
     }
-    task.status = status;
-    await task.save();
-    res.send({ message: 'Task status updated', task });
+    res.status(200).json(task);
   } catch (error) {
-    res.status(400).send({ message: 'Error updating task status', error });
+    res.status(500).json({ error: 'Failed to fetch task details' });
   }
+};
+
+// Create Task
+const createTask = async (req, res) => {
+  const { title, description, assignedUser, dueDate } = req.body;
+  try {
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Title and description are required' });
+    }
+    const task = await Task.create({ title, description, assignedUser, dueDate });
+    res.status(201).json(task);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to create task' });
+  }
+};
+
+// Update Task
+const updateTask = async (req, res) => {
+  const { id } = req.params;
+  const { title, description, assignedUser, dueDate, status } = req.body;
+  try {
+    const updatedTask = await Task.findByIdAndUpdate(
+      id,
+      { title, description, assignedUser, dueDate, status },
+      { new: true, runValidators: true }
+    );
+    if (!updatedTask) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    res.status(200).json(updatedTask);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update task' });
+  }
+};
+
+// Delete Task
+const deleteTask = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedTask = await Task.findByIdAndDelete(id);
+    if (!deletedTask) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    res.status(200).json({ message: 'Task deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete task' });
+  }
+};
+
+module.exports = {
+  getAllTasks,
+  getTaskById,
+  createTask,
+  updateTask,
+  deleteTask,
 };

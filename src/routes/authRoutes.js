@@ -1,22 +1,14 @@
 const express = require('express');
-const { register, login } = require('../controllers/authController');
-const validate = require('../middlewares/validate');
-const Joi = require('joi');
+const {
+  registerUser,
+  loginUser,
+  logoutUser,
+} = require('../controllers/authController');
 
 const router = express.Router();
 
-const registerSchema = Joi.object({
-  username: Joi.string().min(3).required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-});
-
-const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-});
-
-router.post('/register', validate(registerSchema), register);
-router.post('/login', validate(loginSchema), login);
+router.post('/register', registerUser); // Register a new user
+router.post('/login', loginUser); // Login a user
+router.post('/logout', logoutUser); // Logout a user
 
 module.exports = router;
